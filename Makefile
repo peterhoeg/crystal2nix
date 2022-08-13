@@ -14,7 +14,7 @@ bin/crystal2nix: $(META) $(SRCS)
 	@shards build $(CRFLAGS)
 
 $(META): $(YAML) Makefile
-	@yaml2json $(YAML) | jq '{version: .version}' > $@
+	@yaml2json $(YAML) | jq > $@
 
 $(LOCK): $(YAML)
 	@shards install

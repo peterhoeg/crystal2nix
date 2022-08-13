@@ -9,5 +9,5 @@ require "./repo"
 require "./worker"
 
 module Crystal2Nix
-  VERSION = {{ `yaml2json ./shard.yml | jq .version` }}
+  VERSION = {{ `jq .version < ./meta.json` }}
 end

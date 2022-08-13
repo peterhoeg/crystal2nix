@@ -1,3 +1,23 @@
 {
+  "authors": [
+    "Michael Fellinger",
+    "Peter Hoeg <peter@hoeg.com>"
+  ],
+  "crystal": "1.0.0",
+  "dependencies": null,
+  "development_dependencies": {
+    "spectator": {
+      "gitlab": "arctic-fox/spectator",
+      "version": "~> 0.10.5"
+    }
+  },
+  "license": "MIT",
+  "name": "crystal2nix",
+  "repository": "https://github.com/nix-community/crystal2nix",
+  "targets": {
+    "crystal2nix": {
+      "main": "src/runner.cr"
+    }
+  },
   "version": "0.3.1"
 }
