@@ -1,0 +1,14 @@
+{
+  "main": {
+    "checkinterval": 600,
+    "description": "crystal2nix - main",
+    "emailoverride": "",
+    "enabled": 1,
+    "enableemail": false,
+    "flake": "github:crystal-community/crystal2nix.git?ref=refs/heads/main",
+    "hidden": false,
+    "keepnr": 3,
+    "schedulingshares": 1,
+    "type": 1
+  }
+}
