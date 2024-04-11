@@ -24,7 +24,7 @@
             lockFile = ./shard.lock;
             shardsFile = ./shards.nix;
 
-            buildInputs = with pkgs; [ openssl ];
+            buildInputs = with pkgs; [ openssl pcre2 ];
 
             nativeBuildInputs = with pkgs; [ pkg-config ];
           };
@@ -37,15 +37,12 @@
         };
 
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            openssl
-          ];
+          inherit (self.outputs.packages.${system}.crystal2nix) buildInputs;
 
-          nativeBuildInputs = with pkgs; [
-            pkgconfig
+          nativeBuildInputs = self.outputs.packages.${system}.crystal2nix.nativePackages or [] ++ (with pkgs; [
             crystal
             shards
-          ];
+          ]);
         };
       });
 }
