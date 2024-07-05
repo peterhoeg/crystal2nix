@@ -1,12 +1,16 @@
 module Crystal2Nix
   class Cli
     def initialize
+      @debug = false
       @lock_file = "shard.lock"
 
       OptionParser.parse do |parser|
         parser.banner = "Usage: crystal2nix [arguments]"
         parser.on("-l NAME", "--lock-file=NAME", "Lock file name") do |name|
           @lock_file = name
+        end
+        parser.on("-d", "--debug", "Show debugging info") do
+          @debug = true
         end
         parser.on("-h", "--help", "Show help") do
           puts parser
@@ -15,7 +19,7 @@ module Crystal2Nix
         parser.invalid_option do |flag|
           STDERR.puts "ERROR: #{flag} is not a valid option."
           STDERR.puts parser
-          exit(1)
+          exit 1
         end
 
         unless File.exists? @lock_file
@@ -26,7 +30,7 @@ module Crystal2Nix
     end
 
     def run
-      Worker.new(@lock_file).run
+      Worker.new(@lock_file, @debug).run
     end
   end
 end

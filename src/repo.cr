@@ -1,15 +1,57 @@
 module Crystal2Nix
+  enum RepoKind
+    Git
+    Mercurial
+    Fossil
+  end
+
   class Repo
     @url : URI
+    getter kind : RepoKind
     getter rev : String
 
     def initialize(entry : Shard)
-      @url = URI.parse(entry.git).normalize
-      @rev = if entry.version =~ /^(?<version>.+)\+git\.commit\.(?<rev>.+)$/
+      @url = URI.parse(entry.url).normalize
+      @kind = case
+              when entry.fossil then RepoKind::Fossil
+              when entry.git    then RepoKind::Git
+              when entry.hg     then RepoKind::Mercurial
+              else
+                raise ArgumentError.new "Unknown repository type:\n#{entry.inspect}"
+              end
+      @rev = if entry.version =~ /^(?<version>.+)\+(git|hg)\.commit\.(?<rev>.+)$/
                $~["rev"]
              else
                "v#{entry.version}"
              end
+    end
+
+    def cmd : String
+      case @kind
+      in RepoKind::Fossil    then "not_implemented"
+      in RepoKind::Git       then "nix-prefetch-git"
+      in RepoKind::Mercurial then "nix-prefetch-hg"
+      end
+    end
+
+    def args
+      case @kind
+      in RepoKind::Fossil    then ["not_implemented"]
+      in RepoKind::Git       then ["--no-deepClone", "--url", url, "--rev", rev]
+      in RepoKind::Mercurial then [url, rev]
+      end
+    end
+
+    def key : String
+      case @kind
+      in RepoKind::Fossil    then "not_implemented"
+      in RepoKind::Git       then "hash"
+      in RepoKind::Mercurial then "sha256"
+      end
+    end
+
+    def supported?
+      kind != RepoKind::Fossil
     end
 
     def url : String
