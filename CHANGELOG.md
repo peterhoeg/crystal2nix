@@ -1,11 +1,16 @@
-### v0.4.0 
-(IN PROGRESS)
+### v0.4.0
+
+Major change(s):
+
+Support both mercurial and fossil sources. This requires changes to the `shards.nix` format which is
+"hidden" behind a new flag `-f` to ensure that this version doesn't break the nixpkgs
+infrastructure.
 
 ### v0.3.0 2022-04-09
 
 Major change(s):
 
-Create a new shards.nix format that can be used by the nixpkgs `fetchgit`
+Create a new `shards.nix` format that can be used by the nixpkgs `fetchgit`
 fetcher instead of `fetchFromGitHub` to allow fetching from all git sources.
 
 Minor change(s):

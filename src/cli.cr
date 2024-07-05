@@ -2,12 +2,16 @@ module Crystal2Nix
   class Cli
     def initialize
       @debug = false
+      @format = 1_u8
       @lock_file = "shard.lock"
 
       OptionParser.parse do |parser|
         parser.banner = "Usage: crystal2nix [arguments]"
         parser.on("-l NAME", "--lock-file=NAME", "Lock file name") do |name|
           @lock_file = name
+        end
+        parser.on("-f", "--format", "Use the new format with a fetcher") do
+          @format = 2_u8
         end
         parser.on("-d", "--debug", "Show debugging info") do
           @debug = true
@@ -30,7 +34,7 @@ module Crystal2Nix
     end
 
     def run
-      Worker.new(@lock_file, @debug).run
+      Worker.new(@lock_file, @debug, @format).run
     end
   end
 end

@@ -24,7 +24,7 @@
             lockFile = ./shard.lock;
             shardsFile = ./shards.nix;
 
-            buildInputs = with pkgs; [ openssl ];
+            buildInputs = with pkgs; [ nix-prefetch openssl ];
 
             nativeBuildInputs = with pkgs; [ pkg-config ];
           };
@@ -39,6 +39,7 @@
         devShells = flake-utils.lib.flattenTree {
           default = pkgs.mkShell {
             buildInputs = with pkgs; [
+              nix-prefetch
               openssl
             ];
 

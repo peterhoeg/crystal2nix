@@ -28,7 +28,7 @@ module Crystal2Nix
 
     def cmd : String
       case @kind
-      in RepoKind::Fossil    then "not_implemented"
+      in RepoKind::Fossil    then "nix-prefetch"
       in RepoKind::Git       then "nix-prefetch-git"
       in RepoKind::Mercurial then "nix-prefetch-hg"
       end
@@ -36,7 +36,7 @@ module Crystal2Nix
 
     def args
       case @kind
-      in RepoKind::Fossil    then ["not_implemented"]
+      in RepoKind::Fossil    then ["fetchfossil", "--url", url, "--rev", rev]
       in RepoKind::Git       then ["--no-deepClone", "--url", url, "--rev", rev]
       in RepoKind::Mercurial then [url, rev]
       end
@@ -44,14 +44,18 @@ module Crystal2Nix
 
     def key : String
       case @kind
-      in RepoKind::Fossil    then "not_implemented"
+      in RepoKind::Fossil    then "sha256"
       in RepoKind::Git       then "hash"
       in RepoKind::Mercurial then "sha256"
       end
     end
 
-    def supported?
-      kind != RepoKind::Fossil
+    def fetcher
+      case @kind
+      in RepoKind::Fossil    then "fetchfossil"
+      in RepoKind::Git       then "fetchgit"
+      in RepoKind::Mercurial then "fetchhg"
+      end
     end
 
     def url : String

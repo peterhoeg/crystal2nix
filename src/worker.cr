@@ -2,7 +2,7 @@ module Crystal2Nix
   SHARDS_NIX = "shards.nix"
 
   class Worker
-    def initialize(@lock_file : String, @debug : Bool)
+    def initialize(@lock_file : String, @debug : Bool, @format : UInt8)
     end
 
     def run
@@ -12,7 +12,6 @@ module Crystal2Nix
           error "Invalid shard" unless shard.valid?
           repo = Repo.new shard
           error "Unable to parse repository entry" if repo.nil?
-          error "Unsupported repository, #{repo.kind}: #{repo.url}" unless repo.supported?
 
           hash = ""
           Process.run(repo.cmd, args: repo.args) do |x|
@@ -20,11 +19,8 @@ module Crystal2Nix
             case repo.kind
             in RepoKind::Git
               hash = GitJSON.from_json(x.output).hash
-            in RepoKind::Mercurial
+            in RepoKind::Mercurial, RepoKind::Fossil
               hash = x.output.gets
-            in RepoKind::Fossil
-              STDERR.puts "Fossil is not supported. Skipping #{name}"
-              next
             end
           end
 
@@ -32,6 +28,7 @@ module Crystal2Nix
           file.puts %(    url = "#{repo.url}";)
           file.puts %(    rev = "#{repo.rev}";)
           file.puts %(    #{repo.key} = "#{hash}";)
+          file.puts %(    fetcher = "#{repo.fetcher}";) if @format >= 2
           file.puts %(  };)
         end
         file.puts %(})
