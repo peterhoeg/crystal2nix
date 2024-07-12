@@ -1,24 +1,28 @@
 module Crystal2Nix
-  enum RepoKind
-    Git
-    Mercurial
-    Fossil
+  class RepoBuilder
+    def self.build(name : String, shard : Shard, format : UInt8) : Repo
+      case
+      when shard.fossil then RepoFossil.new(name, shard, format)
+      when shard.git    then RepoGit.new(name, shard, format)
+      when shard.hg     then RepoHg.new(name, shard, format)
+      else
+        raise ArgumentError.new "Unknown repository type:\n#{shard.inspect}"
+      end
+    end
   end
 
-  class Repo
+  abstract class Repo
+    @fetcher : String = ""
+    @hash : String?
+    @key : String = ""
+    @name : String
+    @rev : String
     @url : URI
-    getter kind : RepoKind
-    getter rev : String
+    getter args : Array(String) = [] of String
+    getter cmd : String = ""
 
-    def initialize(entry : Shard)
+    def initialize(@name : String, entry : Shard, @format : UInt8)
       @url = URI.parse(entry.url).normalize
-      @kind = case
-              when entry.fossil then RepoKind::Fossil
-              when entry.git    then RepoKind::Git
-              when entry.hg     then RepoKind::Mercurial
-              else
-                raise ArgumentError.new "Unknown repository type:\n#{entry.inspect}"
-              end
       @rev = if entry.version =~ /^(?<version>.+)\+(git|hg)\.commit\.(?<rev>.+)$/
                $~["rev"]
              else
@@ -26,40 +30,72 @@ module Crystal2Nix
              end
     end
 
-    def cmd : String
-      case @kind
-      in RepoKind::Fossil    then "nix-prefetch"
-      in RepoKind::Git       then "nix-prefetch-git"
-      in RepoKind::Mercurial then "nix-prefetch-hg"
-      end
-    end
-
-    def args
-      case @kind
-      in RepoKind::Fossil    then ["fetchfossil", "--url", url, "--rev", rev]
-      in RepoKind::Git       then ["--no-deepClone", "--url", url, "--rev", rev]
-      in RepoKind::Mercurial then [url, rev]
-      end
-    end
-
-    def key : String
-      case @kind
-      in RepoKind::Fossil    then "sha256"
-      in RepoKind::Git       then "hash"
-      in RepoKind::Mercurial then "sha256"
-      end
-    end
-
-    def fetcher
-      case @kind
-      in RepoKind::Fossil    then "fetchfossil"
-      in RepoKind::Git       then "fetchgit"
-      in RepoKind::Mercurial then "fetchhg"
-      end
-    end
+    abstract def parse(io : IO::FileDescriptor)
 
     def url : String
       @url.to_s
+    end
+
+    def to_nix : String
+      String.build do |s|
+        s << %(  #{@name} = {)
+        s << %(    url = "#{url}";)
+        s << %(    rev = "#{@rev}";)
+        s << %(    #{
+  @key
+} = "#{@hash}";)
+        s << %(    fetcher = "#{@fetcher}";) if @format >= 2
+        s << %(  })
+      end
+    end
+
+    def valid?
+      !(name.nil? || rev.nil? || hash.nil?)
+    end
+  end
+
+  class RepoFossil < Repo
+    def initialize(name : String, shard : Shard, format : UInt8)
+      super(name, shard, format)
+      @cmd = "nix-prefetch-git"
+      @key = "hash"
+      @fetcher = "fetchfossil"
+      @args = [@fetcher, "--url", url, "--rev", @rev]
+    end
+
+    def parse(io : IO::FileDescriptor)
+      @hash = io.gets
+    end
+  end
+
+  class RepoGit < Repo
+    def initialize(name : String, shard : Shard, format : UInt8)
+      super(name, shard, format)
+      @cmd = "nix-prefetch"
+      @key = "hash"
+      @fetcher = "fetchgit"
+      @args = ["--no-deepClone", "--url", url, "--rev", @rev]
+    end
+
+    def parse(io : IO::FileDescriptor)
+      # @hash = GitJSON.from_json(io).hash
+      json = GitJSON.from_json(io)
+      @hash = json.hash
+      pp json
+    end
+  end
+
+  class RepoHg < Repo
+    def initialize(name : String, shard : Shard, format : UInt8)
+      super(name, shard, format)
+      @cmd = "nurl"
+      @key = "sha256"
+      @fetcher = "fetchhg"
+      @args = [@fetcher, "--url", url, "--rev", @rev]
+    end
+
+    def parse(io : IO::FileDescriptor)
+      @hash = io.gets
     end
   end
 end

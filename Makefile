@@ -18,4 +18,4 @@ clean:
 
 .PHONY: run
 run: $(BINARY)
-	$(BINARY)
+	$(BINARY) --debug

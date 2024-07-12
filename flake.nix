@@ -24,7 +24,7 @@
             lockFile = ./shard.lock;
             shardsFile = ./shards.nix;
 
-            buildInputs = with pkgs; [ nix-prefetch openssl ];
+            buildInputs = with pkgs; [ nix-prefetch openssl pcre2 ];
 
             nativeBuildInputs = with pkgs; [ pkg-config ];
           };
@@ -41,11 +41,13 @@
             buildInputs = with pkgs; [
               nix-prefetch
               openssl
+              pcre2
             ];
 
             nativeBuildInputs = with pkgs; [
               pkg-config
               crystal
+              nurl
               shards
             ];
           };
